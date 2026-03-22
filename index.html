@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Small static site that checks if it's read-only Friday using the public API." />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Is It Read-Only Friday?</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <meta property="og:title" content="Is It Read-Only Friday?" />
+  <meta property="og:description" content="Check if it's read-only Friday (hands-off production) using a tiny static page." />
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-live="polite">
+      <div class="title">Is It Read-Only Friday?</div>
+      <div id="answer" class="answer" aria-live="polite">…</div>
+      <div id="sub" class="sub">Checking local calendar…</div>
+      <div id="meta" class="meta"></div>
+
+      <div class="links" aria-label="Helpful links">
+        <a href="README.md" rel="noopener">Readme</a>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const answerEl = document.getElementById('answer');
+      const subEl = document.getElementById('sub');
+      const metaEl = document.getElementById('meta');
+
+      const now = new Date();
+      const isReadonly = now.getDay() === 5; // Friday
+
+      answerEl.textContent = isReadonly ? 'Yep.' : 'Nope.';
+      answerEl.classList.toggle('yes', isReadonly);
+      answerEl.classList.toggle('no', !isReadonly);
+      subEl.textContent = isReadonly ? 'Hands off prod.' : 'Change away!';
+
+      const tzOffset = -now.getTimezoneOffset() / 60;
+      metaEl.textContent = `Local time: ${now.toLocaleString()} (UTC${tzOffset >= 0 ? '+' : ''}${tzOffset})`;
+    })();
+  </script>
+</body>
+</html>
+``
