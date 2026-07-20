@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="Small static site that checks if it's read-only Friday using the public API." />
-  <meta name="theme-color" content="#0f172a" />
+  <meta id="theme-color" name="theme-color" content="#0f172a" />
   <title>Is It Read-Only Friday?</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
@@ -12,6 +12,11 @@
   <meta property="og:description" content="Check if it's read-only Friday (hands-off production) using a tiny static page." />
 </head>
 <body>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
+    <span class="theme-icon sun" aria-hidden="true">☀</span>
+    <span class="theme-icon moon" aria-hidden="true">☾</span>
+  </button>
+
   <div class="wrap">
     <main class="card" role="main" aria-live="polite">
       <div class="title">Is It Read-Only Friday?</div>
@@ -30,19 +35,82 @@
       const answerEl = document.getElementById('answer');
       const subEl = document.getElementById('sub');
       const metaEl = document.getElementById('meta');
+      const themeColorEl = document.getElementById('theme-color');
+      const themeToggleEl = document.getElementById('theme-toggle');
 
-      const now = new Date();
-      const isReadonly = now.getDay() === 5; // Friday
+      const themeColors = {
+        dark: '#0f172a',
+        light: '#f8fafc'
+      };
 
-      answerEl.textContent = isReadonly ? 'Yep.' : 'Nope.';
-      answerEl.classList.toggle('yes', isReadonly);
-      answerEl.classList.toggle('no', !isReadonly);
-      subEl.textContent = isReadonly ? 'Hands off prod.' : 'Change away!';
+      function getStoredTheme() {
+        try {
+          return localStorage.getItem('theme');
+        } catch (error) {
+          return null;
+        }
+      }
 
-      const tzOffset = -now.getTimezoneOffset() / 60;
-      metaEl.textContent = `Local time: ${now.toLocaleString()} (UTC${tzOffset >= 0 ? '+' : ''}${tzOffset})`;
+      function storeTheme(theme) {
+        try {
+          localStorage.setItem('theme', theme);
+        } catch (error) {
+          // Ignore private browsing storage failures.
+        }
+      }
+
+      function getPreferredTheme() {
+        const storedTheme = getStoredTheme();
+        if (storedTheme === 'light' || storedTheme === 'dark') {
+          return storedTheme;
+        }
+
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+
+      function applyTheme(theme) {
+        const nextTheme = theme === 'light' ? 'light' : 'dark';
+        const oppositeTheme = nextTheme === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.dataset.theme = nextTheme;
+        themeColorEl.setAttribute('content', themeColors[nextTheme]);
+        themeToggleEl.setAttribute('aria-label', `Switch to ${oppositeTheme} mode`);
+        themeToggleEl.setAttribute('title', `Switch to ${oppositeTheme} mode`);
+      }
+
+      function formatUtcOffset(date) {
+        const offsetMinutes = -date.getTimezoneOffset();
+        const sign = offsetMinutes >= 0 ? '+' : '-';
+        const absoluteMinutes = Math.abs(offsetMinutes);
+        const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, '0');
+        const minutes = String(absoluteMinutes % 60).padStart(2, '0');
+
+        return `UTC${sign}${hours}:${minutes}`;
+      }
+
+      function updateReadonlyState() {
+        const now = new Date();
+        const isReadonly = now.getDay() === 5; // Friday
+
+        answerEl.textContent = isReadonly ? 'Yep.' : 'Nope.';
+        answerEl.classList.toggle('yes', isReadonly);
+        answerEl.classList.toggle('no', !isReadonly);
+        subEl.textContent = isReadonly ? 'Hands off prod.' : 'Change away!';
+        metaEl.textContent = `Local time: ${now.toLocaleString()} (${formatUtcOffset(now)})`;
+      }
+
+      applyTheme(getPreferredTheme());
+      updateReadonlyState();
+      window.setInterval(updateReadonlyState, 1000);
+
+      themeToggleEl.addEventListener('click', function () {
+        const currentTheme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        applyTheme(nextTheme);
+        storeTheme(nextTheme);
+      });
     })();
   </script>
 </body>
 </html>
-``
